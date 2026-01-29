@@ -85,15 +85,15 @@ spec:
         # Disable Grafana since we're using the one from kube-prometheus-stack
         # This prevents duplicate Grafana deployments
         grafana:
-          enabled: true
+          enabled: false
           
         # Disable standalone Prometheus components to prevent conflicts
         # All monitoring is handled by kube-prometheus-stack
         prometheus:
-          enabled: true
+          enabled: false
         
         alertmanager:
-          enabled: true
+          enabled: false
           
         # Configure embedded Promtail
         promtail:
