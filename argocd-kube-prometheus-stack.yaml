@@ -14,6 +14,7 @@ spec:
       values: |
         # Complete unified values for kube-prometheus-stack with Loki integration
         # This configuration enables Prometheus monitoring and adds Loki as a datasource in Grafana
+        # All components are managed as an integrated stack to prevent conflicts
         
         # Grafana configuration with Loki datasource
         grafana:
@@ -49,12 +50,27 @@ spec:
             retention: 120h
             
         # Node Exporter configuration (enabled by default)
+        # This prevents conflicts with standalone node-exporter deployments
         nodeExporter:
           enabled: true
           
         # Kube State Metrics configuration (enabled by default)
+        # Part of the integrated monitoring stack
         kubeStateMetrics:
           enabled: true
+          
+        # Prometheus Operator configuration
+        # Core component that manages Prometheus instances
+        prometheusOperator:
+          enabled: true
+          
+        # Disable conflicting standalone components
+        # These are managed by the kube-prometheus-stack
+        prometheus-node-exporter:
+          enabled: false
+        
+        kube-state-metrics:
+          enabled: false
           
         # Kubelet Service Monitor configuration (enabled by default)
         kubelet:

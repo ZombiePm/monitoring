@@ -12,7 +12,9 @@ spec:
     helm:
       releaseName: loki
       values: |
-        # Minimal Loki configuration with volume support
+        # Loki Log Aggregation - Integrated with kube-prometheus-stack
+        # This deployment includes embedded Promtail for log shipping
+        # Grafana and Prometheus are managed separately by kube-prometheus-stack
         deploymentMode: SingleBinary
         
         loki:
@@ -81,8 +83,17 @@ spec:
             memory: 128Mi
           
         # Disable Grafana since we're using the one from kube-prometheus-stack
+        # This prevents duplicate Grafana deployments
         grafana:
-          enabled: false
+          enabled: true
+          
+        # Disable standalone Prometheus components to prevent conflicts
+        # All monitoring is handled by kube-prometheus-stack
+        prometheus:
+          enabled: true
+        
+        alertmanager:
+          enabled: true
           
         # Configure embedded Promtail
         promtail:
