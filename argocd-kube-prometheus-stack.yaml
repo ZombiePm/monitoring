@@ -89,8 +89,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    ignoreDifferences:
-      - group: apiextensions.k8s.io
-        kind: CustomResourceDefinition
-        jsonPointers:
-          - /metadata/annotations
+      - ApplyOutOfSyncOnly=true
+      - RespectIgnoreDifferences=true
