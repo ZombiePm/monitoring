@@ -98,6 +98,7 @@ spec:
         # Configure embedded Promtail
         promtail:
           enabled: true
+          # Promtail configuration to send logs to Loki
           config:
             logLevel: info
             serverPort: 3101
@@ -141,6 +142,11 @@ spec:
                       - __meta_kubernetes_pod_uid
                       - __meta_kubernetes_pod_container_name
                     target_label: __path__
+          
+          # Disable persistence
+          persistence:
+            enabled: false
+          
           # Resource adjustments
           resources:
             limits:
