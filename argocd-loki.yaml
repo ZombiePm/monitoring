@@ -1,0 +1,149 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-loki
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    targetRevision: 6.51.0
+    chart: loki
+    helm:
+      releaseName: loki
+      values: |
+        # Minimal Loki configuration with volume support
+        deploymentMode: SingleBinary
+        
+        loki:
+          auth_enabled: false
+          commonConfig:
+            replication_factor: 1
+            path_prefix: /tmp/loki
+          storage:
+            type: 'filesystem'
+            filesystem:
+              chunks_directory: /tmp/loki/chunks
+              rules_directory: /tmp/loki/rules
+            bucketNames:
+              chunks: chunks
+              ruler: ruler
+              admin: admin
+          limits_config:
+            volume_enabled: true
+            allow_structured_metadata: true
+          pattern_ingester:
+            enabled: true
+          # Define our own schema instead of using test schema
+          schemaConfig:
+            configs:
+            - from: "2024-01-01"
+              store: tsdb
+              object_store: filesystem
+              schema: v13
+              index:
+                prefix: index_
+                period: 24h
+                
+        singleBinary:
+          replicas: 1
+          persistence:
+            enabled: false
+            
+        # Disable all scalable components
+        backend:
+          replicas: 0
+        
+        read:
+          replicas: 0
+        
+        write:
+          replicas: 0
+        
+        # Disable caching
+        chunksCache:
+          enabled: false
+        
+        resultsCache:
+          enabled: false
+        
+        # Disable gateway
+        gateway:
+          enabled: false
+        
+        # Resource adjustments
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          
+        # Disable Grafana since we're using the one from kube-prometheus-stack
+        grafana:
+          enabled: false
+          
+        # Configure embedded Promtail
+        promtail:
+          enabled: true
+          config:
+            logLevel: info
+            serverPort: 3101
+            clients:
+              - url: http://loki:3100/loki/api/v1/push
+            snippets:
+              pipelineStages:
+                - cri: {}
+            positions:
+              filename: /run/promtail/positions.yaml
+            scrapeConfigs:
+              - job_name: kubernetes-pods
+                kubernetes_sd_configs:
+                  - role: pod
+                relabel_configs:
+                  - source_labels:
+                      - __meta_kubernetes_pod_node_name
+                    target_label: __host__
+                  - action: replace
+                    replacement: $1
+                    separator: /
+                    source_labels:
+                      - __meta_kubernetes_namespace
+                      - __meta_kubernetes_pod_name
+                    target_label: job
+                  - action: replace
+                    source_labels:
+                      - __meta_kubernetes_namespace
+                    target_label: namespace
+                  - action: replace
+                    source_labels:
+                      - __meta_kubernetes_pod_name
+                    target_label: pod
+                  - action: replace
+                    source_labels:
+                      - __meta_kubernetes_pod_container_name
+                    target_label: container
+                  - replacement: /var/log/pods/*$1/*.log
+                    separator: /
+                    source_labels:
+                      - __meta_kubernetes_pod_uid
+                      - __meta_kubernetes_pod_container_name
+                    target_label: __path__
+          # Resource adjustments
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
