@@ -55,7 +55,7 @@ spec:
           enabled: true
           
         # Kube State Metrics configuration (enabled by default)
-        # Part of the integrated monitoring stack
+        # Provides metrics about Kubernetes objects (pods, nodes, deployments, etc.)
         kubeStateMetrics:
           enabled: true
           
@@ -64,12 +64,9 @@ spec:
         prometheusOperator:
           enabled: true
           
-        # Disable conflicting standalone components
-        # These are managed by the kube-prometheus-stack
+        # Disable conflicting standalone node-exporter
+        # The integrated nodeExporter is used instead
         prometheus-node-exporter:
-          enabled: false
-        
-        kube-state-metrics:
           enabled: false
           
         # Kubelet Service Monitor configuration (enabled by default)
